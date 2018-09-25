@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html> 
+  <head>
+    <title>Processing.JS inside Webpages: Template</title> 
+  </head>
+  <body>
+	<!--This draws the canvas on the webpage -->
+    <canvas id="mycanvas"></canvas> 
+  </body>
+ 
+  <!-- Include the processing.js library -->
+  <!-- See https://khanacademy.zendesk.com/hc/en-us/articles/202260404-What-parts-of-ProcessingJS-does-Khan-Academy-support- for differences -->
+  <script src="https://cdn.jsdelivr.net/processing.js/1.4.8/processing.min.js"></script> 
+  <script>
+  var programCode = function(processingInstance) {
+    with (processingInstance) {
+      size(400, 400); 
+      frameRate(30);
+        
+      // Paste code from Khan Academy here:
+/****************
+TO USE THIS ENGINE, COPY AND PASTE LINES 10 THROUGH 130 TO THE TOP OF YOUR PROGRAM.
+
+
+CREDITS:
+i got the code for lines 17 through 39 from this site:                                                                              https://www.khanacademy.org/computing/computer-programming/programming-games-visualizations/programming-3d-shapes/a/rotating-3d-shapes
+****************/
+
+
+/****
+IGNORE LINES 13 THROUGH 43
+****/
+var node, thing, things, rx, ry, rz, fColor, sColor;
+{
+    things = [];
+    node = function(x, y, z, rotateX, rotateY, rotateZ){
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.rotateX = rotateX;
+        this.rotateY = rotateY;
+        this.rotateZ = rotateZ;
+        var sinTheta = sin(this.rotateX);
+        var cosTheta = cos(this.rotateX);
+        this.y = y * cosTheta - z * sinTheta;
+        this.z = z * cosTheta + y * sinTheta;
+        z = this.z;
+        sinTheta = sin(this.rotateY);
+        cosTheta = cos(this.rotateY);
+        this.x = x * cosTheta - z * sinTheta;
+        this.z = z * cosTheta + x * sinTheta;
+        x = this.x;
+        y = this.y;
+        sinTheta = sin(this.rotateZ);
+        cosTheta = cos(this.rotateZ);
+        this.x = x * cosTheta - y * sinTheta;
+        this.y = y * cosTheta + x * sinTheta;
+        var spread = 2000;
+        this.x *= (this.z+spread)/(spread+200);
+        this.y *= (this.z+spread)/(spread+200);
+    };
+}
+
+
+/****
+COMMANDS
+****/
+var beginThing, lineTo, bezierTo, endThing, render;
+{
+    beginThing = function(rotateX, rotateY, rotateZ, fillColor, strokeColor){
+        rx = rotateX;
+        ry = rotateY;
+        rz = rotateZ;
+        fColor = fillColor;
+        sColor = strokeColor;
+        thing = [];
+    };
+    lineTo = function(x, y, z){
+        var to = new node(x, y, z, rx, ry, rz);
+        thing.push([to.z, 'l', to.x, to.y]);
+    };
+    bezierTo = function(cx1, cy1, cz1, cx2, cy2, cz2, x, y, z){
+        var c1 = new node(cx1, cy1, cz1, rx, ry, rz);
+        var c2 = new node(cx2, cy2, cz2, rx, ry, rz);
+        var to = new node(x, y, z, rx, ry, rz);
+        thing.push([(to.z+c1.z+c2.z)/3, c1.x, c1.y, c2.x, c2.y, to.x, to.y]);
+    };
+    endThing = function(){
+        var copyThing = thing;
+        thing = [];
+        var thingZ = 0;
+        for(var x = 0; x < copyThing.length; x++){
+            thingZ += copyThing[x][0];
+        }
+        thing = [thingZ/copyThing.length, fColor, sColor];
+        for(var x = 0; x < copyThing.length; x++){
+            var currentVertex = [];
+            for(var y = 1; y < copyThing[x].length; y++){
+                currentVertex.push(copyThing[x][y]);
+            }
+            thing.push(currentVertex);
+        }
+        things.push(thing);
+    };
+    render = function(){
+        for(var x = 0; x < things.length; x++){
+            for(var y = 0; y < things.length-1; y++){
+                if(things[y][0] > things[y+1][0]){
+                    var z = things[y];
+                    things[y] = things[y+1];
+                    things[y+1] = z;
+                }
+            }
+        }
+        strokeJoin(MITER);
+        for(var x = 0; x < things.length; x++){
+            fill(things[x][1]);
+            stroke(things[x][2]);
+            beginShape();
+            for(var y = 3; y < things[x].length; y++){
+                if(things[x][y][0] === 'l'){
+                    vertex(
+                        things[x][y][1], things[x][y][2]
+                    );
+                }else{
+                    bezierVertex(
+                        things[x][y][0], things[x][y][1],
+                        things[x][y][2], things[x][y][3],
+                        things[x][y][4], things[x][y][5]
+                    );
+                }
+            }
+            endShape();
+        }
+        thing = [];
+        things = [];
+    };
+}
+/*
+   DOCUMENTATION
+beginThing:(angle) rotate x, y, z, (color) fill, stroke
+    sets the colors of an object and will always start the
+    object
+lineTo:(pixels) lineTo x, y, z
+    sets where the outline will start or continues the outline
+    to the designated point in a strait line
+bezierTo:(pixels) control point x, y, z, control point 2 x, y, z
+         (pixels) curveTo x, y, z
+    continues the outline to the designated point in a curve
+    veering towards two other points in the order they're placed
+endThing:none
+    saves the object to an array
+render:none
+    sorts the objects saved in an array from least to greatest
+    by average z value and then draws them in that order
+var <nodeName> = new node:(pixels) store x, y, z (angle) rotate
+                 x, y, z
+    stores an object literal with the proporties x, y, and z in
+    a variable
+*/
+/****
+PROGRAM CODE HERE:
+****/
+var calcBrightness = function(x1, y1, z1, x2, y2, z2, x3, y3, z3){
+    var brightness = 1;
+    var X2 = x2, Z2 = z2;
+    var X3 = x3, Z3 = z3;
+    Z2 = dist(x1, z1, x2, z2)+z1;
+    X2 = x1;
+    Z3 = dist(x1, z1, x3, z3)+z1;
+    X3 = x1;
+    var angle2 = atan2(Z2-z1, y2-y1)*PI/180;
+    var angle3 = atan2(Z3-z1, y3-y1)*PI/180;
+    var angleDiff = abs(atan2(x1-x2, z1-z2)*PI/180-atan2(x1-x3, z1-z3)*PI/180);
+    angle2 = 90-abs(90-angle2);
+    angle3 = 90-abs(90-angle3);
+    angleDiff = 90-abs(90-abs(180-angleDiff));
+    brightness*=angle2/90;
+    brightness*=angle3/90;
+    brightness*=angleDiff/90;
+    return(brightness);
+};
+translate(200, 200);
+var RX = 0, RY = 0, RZ = 0;
+var draw = function() {
+    //update variables
+    RX+=3/180*PI;
+    RY+=2/180*PI;
+    RZ+=1/180*PI;
+    var n1 = new node(0, 0, 0, RX, RY, RZ);
+    var n3 = new node(200, 100, 0, RX, RY, RZ);
+    var n2 = new node(200, 0, 0, RX, RY, RZ);
+    var bright = calcBrightness(n1.x, n1.y, n1.z, n2.x, n2.y, n2.z, n3.x, n3.y, n3.z);
+    //draw background image
+    background(255, 255, 255);
+    //draw sprites
+    beginThing(0, 0, 0, color(bright*255, bright*122, bright*0), color(0, 0, 0));
+    lineTo(n1.x, n1.y, n1.z);
+    lineTo(n2.x, n2.y, n2.z);
+    lineTo(n3.x, n3.y, n3.z);
+    endThing();
+    render();
+    fill(255, 0, 0);
+    text("n1", n1.x, n1.y);
+    text("n2", n2.x, n2.y);
+    text("n3", n3.x, n3.y);
+};
+
+    }};
+
+  // Get the canvas that ProcessingJS will use
+  var canvas = document.getElementById("mycanvas"); 
+  // Pass the function to ProcessingJS constructor
+  var processingInstance = new Processing(canvas, programCode); 
+  </script>
+</html>
